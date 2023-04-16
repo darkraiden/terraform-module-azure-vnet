@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,14 +27,17 @@ func getTestConfig(t *testing.T) *config {
 	return &config
 }
 
-var fixtureFolder = "./fixture"
+const fixtureFolder = "tests/fixture"
 
 func TestVirtualNetwork(t *testing.T) {
 	config := getTestConfig(t)
 
 	t.Run(`JustVNet`, func(t *testing.T) {
+		t.Parallel()
+
+		tmpFolder := test_structure.CopyTerraformFolderToTemp(t, "../", fixtureFolder)
 		terraformOptions := &terraform.Options{
-			TerraformDir: fixtureFolder,
+			TerraformDir: tmpFolder,
 			Vars: map[string]interface{}{
 				"subscription_id": config.subscriptionID,
 				"tenant_id":       config.tenantID,
@@ -48,14 +52,19 @@ func TestVirtualNetwork(t *testing.T) {
 		vnet_name := terraform.Output(t, terraformOptions, "vnet_name")
 		vnet_location := terraform.Output(t, terraformOptions, "vnet_location")
 		rg_location := terraform.Output(t, terraformOptions, "resource_group_location")
+		ddos_protection_plan_id := terraform.Output(t, terraformOptions, "ddos_protection_plan_id")
 
 		require.Equal(t, vnet_location, rg_location)
 		require.Equal(t, vnet_name, rg_name)
+		require.Empty(t, ddos_protection_plan_id)
 	})
 
 	t.Run(`WithListOfSubnets`, func(t *testing.T) {
+		t.Parallel()
+
+		tmpFolder := test_structure.CopyTerraformFolderToTemp(t, "../", fixtureFolder)
 		terraformOptions := &terraform.Options{
-			TerraformDir: fixtureFolder,
+			TerraformDir: tmpFolder,
 			Vars: map[string]interface{}{
 				"subscription_id": config.subscriptionID,
 				"tenant_id":       config.tenantID,
@@ -71,14 +80,15 @@ func TestVirtualNetwork(t *testing.T) {
 	})
 
 	t.Run(`WithVNetsLocationDifferentFromRGs`, func(t *testing.T) {
+		t.Parallel()
+
+		tmpFolder := test_structure.CopyTerraformFolderToTemp(t, "../", fixtureFolder)
 		terraformOptions := &terraform.Options{
-			TerraformDir: fixtureFolder,
+			TerraformDir: tmpFolder,
 			Vars: map[string]interface{}{
 				"subscription_id": config.subscriptionID,
 				"tenant_id":       config.tenantID,
-				// we could simply create a new tfvars file
-				// but given the small change, I think it's fine passing it as a cli variable
-				"vnet_location": "westeurope",
+				"vnet_location":   "westeurope",
 			},
 			VarFiles: []string{"just_vnet.tfvars"},
 		}
@@ -90,10 +100,30 @@ func TestVirtualNetwork(t *testing.T) {
 		rg_location := terraform.Output(t, terraformOptions, "resource_group_location")
 		vnet_location := terraform.Output(t, terraformOptions, "vnet_location")
 
-		// we could also just check whether the two locations are not equal
-		// but this way we are sure that the vnet is in the right location
 		require.Equal(t, vnet_location, "westeurope")
 		require.Equal(t, rg_location, "northeurope")
 		require.Equal(t, len(subnet_ids), 0)
+	})
+
+	t.Run(`WithDDoSProtectionEnabled`, func(t *testing.T) {
+		t.Parallel()
+
+		tmpFolder := test_structure.CopyTerraformFolderToTemp(t, "../", fixtureFolder)
+		terraformOptions := &terraform.Options{
+			TerraformDir: tmpFolder,
+			Vars: map[string]interface{}{
+				"subscription_id":             config.subscriptionID,
+				"tenant_id":                   config.tenantID,
+				"enable_ddos_protection_plan": true,
+			},
+			VarFiles: []string{"just_vnet.tfvars"},
+		}
+		defer terraform.Destroy(t, terraformOptions)
+
+		terraform.InitAndApply(t, terraformOptions)
+
+		ddosProtectionPlanID := terraform.Output(t, terraformOptions, "ddos_protection_plan_id")
+
+		require.NotEmpty(t, ddosProtectionPlanID)
 	})
 }

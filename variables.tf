@@ -1,10 +1,10 @@
 variable "vnet_name" {
-  type = string
+  description = "The name of the Virtual Network."
+  type        = string
 }
 
 variable "resource_group" {
-  // This object will make sense once we have created
-  // our root module in the `fixture` folder
+  description = "The Resource Group where the Virtual Network should exist."
   type = object({
     id       = string
     name     = string
@@ -13,15 +13,18 @@ variable "resource_group" {
 }
 
 variable "location" {
-  type    = string
-  default = null
+  description = "The location/region where the Virtual Network should exist."
+  type        = string
+  default     = null
 }
 
 variable "address_space" {
-  type = list(string)
+  description = "The list of address space prefixes used by the Virtual Network."
+  type        = list(string)
 }
 
 variable "subnets" {
+  description = "[Optional] A list of subnets to be created within the Virtual Network."
   type = list(object({
     name             = string
     address_prefixes = list(string)
@@ -30,6 +33,7 @@ variable "subnets" {
 }
 
 variable "enable_ddos_protection_plan" {
-  type    = bool
-  default = false
+  description = "[Optional] Should a DDoS Protection Plan be associated with the Virtual Network?"
+  type        = bool
+  default     = false
 }

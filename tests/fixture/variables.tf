@@ -3,10 +3,7 @@ variable "subscription_id" {}
 variable "tenant_id" {}
 
 variable "base_name" {
-  type = string
-  // I personally like to prefix all my resources with `terratest`
-  // this helps me target them with clean up scripts that I run daily
-  // (yes, it does happen that terratest fails and orphan resources are left behind)
+  type    = string
   default = "terratest-vnet"
 }
 
@@ -21,7 +18,10 @@ variable "subnets" {
 }
 
 variable "vnet_location" {
-  type = string
-  // defaulting once again to null to allow us to use the location of the resource group
+  type    = string
   default = null
+}
+
+variable "enable_ddos_protection_plan" {
+  default = false
 }

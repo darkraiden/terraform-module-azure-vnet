@@ -15,13 +15,12 @@ resource "azurerm_resource_group" "this" {
 }
 
 module "vnet" {
-  source    = "../../"
-  vnet_name = local.resources_name // using same name for both vnet and rg is totally fine
-  // by passing the entire rg object,
-  // we have access to the attributes we defined previously in the child module
-  // (id, name, and location)
-  resource_group = azurerm_resource_group.this
-  location       = var.vnet_location
-  address_space  = var.vnet_address_space
-  subnets        = var.subnets
+  source = "../../"
+
+  vnet_name                   = local.resources_name
+  resource_group              = azurerm_resource_group.this
+  location                    = var.vnet_location
+  address_space               = var.vnet_address_space
+  subnets                     = var.subnets
+  enable_ddos_protection_plan = var.enable_ddos_protection_plan
 }

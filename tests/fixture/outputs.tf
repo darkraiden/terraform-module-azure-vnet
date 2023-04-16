@@ -17,3 +17,7 @@ output "vnet_location" {
 output "subnet_ids" {
   value = module.vnet.subnet_ids
 }
+
+output "ddos_protection_plan_id" {
+  value = module.vnet.ddos_protection_plan_id
+}
